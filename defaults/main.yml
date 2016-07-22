@@ -1,0 +1,15 @@
+---
+appprovision:
+  app: app
+  databases: []
+  pre_install:
+    host_tasks: []
+  install:
+    guest_tasks: []
+  temporary_directories: []
+  symlinks: []
+  app_symlinks: []
+  virtualhosts: []
+  sync_exclude: []
+  post_install:
+    host_tasks: []

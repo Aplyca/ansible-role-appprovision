@@ -1,0 +1,6 @@
+.vagrant
+custom*
+*.box
+.vault
+*.retry
+**/roles
