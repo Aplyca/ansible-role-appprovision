@@ -1,4 +1,3 @@
 ---
 appprovision:
-  temporary_directories:
-    - test
+  app: app

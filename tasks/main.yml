@@ -12,12 +12,31 @@
   local_action: "shell {{ item }}"
   with_items: "{{ appprovision.pre_install.host_tasks }}"
 
+- name: Guest pre-install tasks
+  shell: "{{ item }}"
+  args:
+    chdir: "/vagrant"
+  environment: "{{ appprovision.pre_install.env_vars | default({}) }}"
+  with_items: "{{ appprovision.pre_install.guest_tasks }}"
+
+- name: Host install tasks
+  local_action: "shell {{ item }}"
+  with_items: "{{ appprovision.install.host_tasks }}"
+
 - name: Guest install tasks
   shell: "{{ item }}"
   args:
     chdir: "/vagrant"
   environment: "{{ appprovision.install.env_vars | default({}) }}"
   with_items: "{{ appprovision.install.guest_tasks }}"
+
+- name: Make sure App directories are present
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - "{{ appprovision.app }}"
+    - /vagrant
 
 - name: Make sure app temporary directories are present
   file:
@@ -65,7 +84,7 @@
     path: "{{ appprovision.app }}/{{ item }}"
     state: link
     force: yes
-  with_items: "{{ appprovision.symlinks }}"
+  with_items: "{{ appprovision.symlinks | default([]) }}"
 
 - name: Make sure App symlinks are present
   file:
@@ -73,7 +92,7 @@
     path: "{{ appprovision.app }}/{{ item.target }}"
     state: link
     force: yes
-  with_items: "{{ appprovision.app_symlinks }}"
+  with_items: "{{ appprovision.app_symlinks | default([]) }}"
 
 - name: Make sure App virtualhosts are present
   become: yes
@@ -109,3 +128,10 @@
 - name: Host post-install tasks
   local_action: "shell {{ item }}"
   with_items: "{{ appprovision.post_install.host_tasks | default([]) }}"
+
+- name: Guest post-install tasks
+  shell: "{{ item }}"
+  args:
+    chdir: "/vagrant"
+  environment: "{{ appprovision.post_install.env_vars | default({}) }}"
+  with_items: "{{ appprovision.post_install.guest_tasks }}"

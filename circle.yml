@@ -3,7 +3,7 @@ dependencies:
     - sudo pip install -r tests/requirements.txt
 
 test:
-  pre:
+  pre:     
     - sudo ln -s ansible-role-appprovision ../Aplyca.AppProvision
   override:
     - tests/test.sh
