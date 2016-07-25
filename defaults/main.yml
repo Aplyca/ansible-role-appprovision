@@ -3,17 +3,16 @@ appprovision:
   app: app
   databases: []
   pre_install:
-    guest_tasks: []  
+    guest_tasks: []
     host_tasks: []
   install:
-    guest_tasks: []  
+    guest_tasks: []
     host_tasks: []
-  temporary_directories: []
+  directories: []
   app_symlinks: []
   sync_symlinks: []
-  os_symlinks: []  
   virtualhosts: []
-  sync_exclude: []
+  sync: []
   post_install:
-    guest_tasks: []  
+    guest_tasks: []
     host_tasks: []

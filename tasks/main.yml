@@ -1,4 +1,14 @@
 ---
+- name: Make sure DBs are present
+  become: yes
+  mysql_db:
+    name: "{{ item }}"
+    state: present
+    encoding: "utf8"
+    collation: "utf8_general_ci"
+  with_items: "{{ appprovision.databases }}"
+  tags: db
+
 - name: Import DB SQL file
   become: yes
   mysql_db:
@@ -8,14 +18,17 @@
   with_items: "{{ appprovision.databases }}"
   tags: db
 
+- name: Make sure App directories are present
+  file:
+    path: "{{ appprovision.app }}"
+    state: directory
+
 - name: Host pre-install tasks
   local_action: "shell {{ item }}"
   with_items: "{{ appprovision.pre_install.host_tasks }}"
 
 - name: Guest pre-install tasks
   shell: "{{ item }}"
-  args:
-    chdir: "/vagrant"
   environment: "{{ appprovision.pre_install.env_vars | default({}) }}"
   with_items: "{{ appprovision.pre_install.guest_tasks }}"
 
@@ -25,24 +38,14 @@
 
 - name: Guest install tasks
   shell: "{{ item }}"
-  args:
-    chdir: "/vagrant"
   environment: "{{ appprovision.install.env_vars | default({}) }}"
   with_items: "{{ appprovision.install.guest_tasks }}"
-
-- name: Make sure App directories are present
-  file:
-    path: "{{ item }}"
-    state: directory
-  with_items:
-    - "{{ appprovision.app }}"
-    - /vagrant
 
 - name: Make sure app temporary directories are present
   file:
     path: "{{ appprovision.app }}/{{ item }}"
     state: directory
-  with_items: "{{ appprovision.temporary_directories }}"
+  with_items: "{{ appprovision.directories }}"
 
 - name: Make sure the ACLs for app directories for webserver user are present
   acl:
@@ -51,7 +54,7 @@
     etype: user
     permissions: rxw
     state: present
-  with_items: "{{ appprovision.temporary_directories }}"
+  with_items: "{{ appprovision.directories }}"
 
 - name: Make sure the ACLs for app directories with default and webserver user are present
   acl:
@@ -61,7 +64,7 @@
     permissions: rxw
     default: yes
     state: present
-  with_items: "{{ appprovision.temporary_directories }}"
+  with_items: "{{ appprovision.directories }}"
 
 - name: Make sure the ACLs for app directories with current user are present
   acl:
@@ -71,25 +74,25 @@
     permissions: rxw
     default: yes
     state: present
-  with_items: "{{ appprovision.temporary_directories }}"
+  with_items: "{{ appprovision.directories }}"
 
 - name: Copy app files
-  shell: "rsync -auAXK --inplace {% for path in appprovision.sync_exclude %}--exclude {{ path }} {% endfor %}/vagrant/ ."
+  shell: "rsync -auAXK --inplace {% for path in appprovision.sync %}--include '{{ path }}' {% endfor %}--exclude '*' /vagrant/ ."
   args:
     chdir: "{{ appprovision.app }}"
 
-- name: Make sure VM symlinks are present
+- name: Make sure Sync symlinks are present
   file:
     src: "/vagrant/{{ item }}"
     path: "{{ appprovision.app }}/{{ item }}"
     state: link
     force: yes
-  with_items: "{{ appprovision.symlinks | default([]) }}"
+  with_items: "{{ appprovision.sync_symlinks | default([]) }}"
 
 - name: Make sure App symlinks are present
   file:
     src: "{{ item.source }}"
-    path: "{{ appprovision.app }}/{{ item.target }}"
+    path: "{{ item.target }}"
     state: link
     force: yes
   with_items: "{{ appprovision.app_symlinks | default([]) }}"
@@ -100,6 +103,7 @@
     src: "/vagrant/{{ item.path }}/{{ item.name }}.conf"
     path: "/etc/apache2/sites-available/{{ item.name }}.conf"
     state: link
+    force: yes
   with_items: "{{ appprovision.virtualhosts }}"
   notify: reload apache
 
@@ -131,7 +135,5 @@
 
 - name: Guest post-install tasks
   shell: "{{ item }}"
-  args:
-    chdir: "/vagrant"
   environment: "{{ appprovision.post_install.env_vars | default({}) }}"
   with_items: "{{ appprovision.post_install.guest_tasks }}"
