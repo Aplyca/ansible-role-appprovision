@@ -122,12 +122,21 @@
   with_items: "{{ appprovision.guest_symlinks | default([]) }}"
 
 - name: Ensure config files are present
+  become: yes
   template:
     src: "config.j2"
     dest: "{{ item.dest }}"
   with_items: "{{ appprovision.config | default([]) }}"
-  #no_log: True
+  no_log: True
   tags: config
+
+- name: "Replacements"
+  become: yes
+  replace:
+    dest: "{{ item.file }}"
+    regexp: "{{ item.regex }}"
+    replace: "{{ item.replace }}"
+  with_items: "{{ appprovision.replacements | default([]) }}"
 
 - name: Host post-install tasks
   local_action: "shell {{ item }}"

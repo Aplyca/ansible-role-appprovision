@@ -13,6 +13,8 @@ appprovision:
   sync_symlinks: []
   virtualhosts: []
   sync: []
+  replacements: []
+  config: []
   post_install:
     guest_tasks: []
     host_tasks: []
