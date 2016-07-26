@@ -16,6 +16,8 @@
     state: import
     target: "/vagrant/{{ item }}.sql.gz"
   with_items: "{{ appprovision.databases }}"
+  async: 3600
+  poll: 0
   tags: db
 
 - name: Make sure App directories are present
@@ -138,11 +140,11 @@
     replace: "{{ item.replace }}"
   with_items: "{{ appprovision.replacements | default([]) }}"
 
-- name: Host post-install tasks
-  local_action: "shell {{ item }}"
-  with_items: "{{ appprovision.post_install.host_tasks | default([]) }}"
-
 - name: Guest post-install tasks
   shell: "{{ item }}"
   environment: "{{ appprovision.post_install.env_vars | default({}) }}"
   with_items: "{{ appprovision.post_install.guest_tasks }}"
+
+- name: Host post-install tasks
+  local_action: "shell {{ item }}"
+  with_items: "{{ appprovision.post_install.host_tasks | default([]) }}"
