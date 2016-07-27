@@ -11,6 +11,7 @@ appprovision:
   directories: []
   app_symlinks: []
   sync_symlinks: []
+  guest_symlinks: []
   virtualhosts: []
   sync: []
   replacements: []

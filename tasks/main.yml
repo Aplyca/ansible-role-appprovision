@@ -83,6 +83,14 @@
   args:
     chdir: "{{ appprovision.app }}"
 
+- name: Make sure Guest symlinks are present
+  become: yes
+  file:
+    src: "{{ item.src }}"
+    path: "{{ item.path }}"
+    state: link
+  with_items: "{{ appprovision.guest_symlinks | default([]) }}"
+
 - name: Make sure Sync symlinks are present
   file:
     src: "/vagrant/{{ item }}"
@@ -114,14 +122,6 @@
   command: "a2ensite {{ item.name }}"
   with_items: "{{ appprovision.virtualhosts }}"
   notify: reload apache
-
-- name: Make sure Guest symlinks are present
-  become: yes
-  file:
-    src: "{{ item.src }}"
-    path: "{{ item.path }}"
-    state: link
-  with_items: "{{ appprovision.guest_symlinks | default([]) }}"
 
 - name: Ensure config files are present
   become: yes
