@@ -86,9 +86,10 @@
 - name: Make sure Guest symlinks are present
   become: yes
   file:
-    src: "{{ item.src }}"
-    path: "{{ item.path }}"
+    src: "{{ item.source }}"
+    path: "{{ item.target }}"
     state: link
+    force: yes
   with_items: "{{ appprovision.guest_symlinks | default([]) }}"
 
 - name: Make sure Sync symlinks are present
