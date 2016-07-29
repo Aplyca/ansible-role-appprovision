@@ -38,6 +38,15 @@
   local_action: "shell {{ item }}"
   with_items: "{{ appprovision.install.host_tasks }}"
 
+- name: Ensure config files are present
+  become: yes
+  template:
+    src: "config.j2"
+    dest: "{{ item.dest }}"
+  with_items: "{{ appprovision.config | default([]) }}"
+  no_log: True
+  tags: config
+
 - name: Guest install tasks
   shell: "{{ item }}"
   environment: "{{ appprovision.install.env_vars | default({}) }}"
@@ -123,15 +132,6 @@
   command: "a2ensite {{ item.name }}"
   with_items: "{{ appprovision.virtualhosts }}"
   notify: reload apache
-
-- name: Ensure config files are present
-  become: yes
-  template:
-    src: "config.j2"
-    dest: "{{ item.dest }}"
-  with_items: "{{ appprovision.config | default([]) }}"
-  no_log: True
-  tags: config
 
 - name: "Replacements"
   become: yes
