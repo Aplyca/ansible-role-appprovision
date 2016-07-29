@@ -27,7 +27,7 @@
 
 - name: Host pre-install tasks
   local_action: "shell {{ item }}"
-  with_items: "{{ appprovision.pre_install.host_tasks }}"
+  with_items: "{{ appprovision.pre_install.host_tasks | default([]) }}"
 
 - name: Guest pre-install tasks
   shell: "{{ item }}"
