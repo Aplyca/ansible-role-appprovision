@@ -91,6 +91,7 @@
   shell: "rsync -auAXK --inplace {% for path in appprovision.sync %}--include '{{ path }}' {% endfor %}--exclude '*' /vagrant/ ."
   args:
     chdir: "{{ appprovision.app }}"
+  ignore_errors: yes     
 
 - name: Make sure Guest symlinks are present
   become: yes
