@@ -38,7 +38,7 @@
   local_action: "shell {{ item }}"
   with_items: "{{ appprovision.install.host_tasks }}"
 
-- name: Ensure config files are present
+- name: Ensure OS config files are present
   become: yes
   template:
     src: "config.j2"
@@ -91,7 +91,7 @@
   shell: "rsync -auAXK --inplace {% for path in appprovision.sync %}--include '{{ path }}' {% endfor %}--exclude '*' /vagrant/ ."
   args:
     chdir: "{{ appprovision.app }}"
-  ignore_errors: yes     
+  ignore_errors: yes
 
 - name: Make sure Guest symlinks are present
   become: yes
@@ -118,22 +118,6 @@
     force: yes
   with_items: "{{ appprovision.app_symlinks | default([]) }}"
 
-- name: Make sure App virtualhosts are present
-  become: yes
-  file:
-    src: "/vagrant/{{ item.path }}/{{ item.name }}.conf"
-    path: "/etc/apache2/sites-available/{{ item.name }}.conf"
-    state: link
-    force: yes
-  with_items: "{{ appprovision.virtualhosts }}"
-  notify: reload apache
-
-- name: Enable virtualhosts
-  become: yes
-  command: "a2ensite {{ item.name }}"
-  with_items: "{{ appprovision.virtualhosts }}"
-  notify: reload apache
-
 - name: "Replacements"
   become: yes
   replace:
@@ -141,6 +125,13 @@
     regexp: "{{ item.regex }}"
     replace: "{{ item.replace }}"
   with_items: "{{ appprovision.replacements | default([]) }}"
+
+- name: Guest post-install files
+  copy:
+    src: "{{ item.source }}"
+    dest: "{{ item.dest }}"
+    follow: yes
+  with_items: "{{ appprovision.post_install.files }}"
 
 - name: Guest post-install tasks
   shell: "{{ item }}"

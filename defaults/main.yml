@@ -12,10 +12,10 @@ appprovision:
   app_symlinks: []
   sync_symlinks: []
   guest_symlinks: []
-  virtualhosts: []
   sync: []
   replacements: []
   config: []
   post_install:
+    files: []  
     guest_tasks: []
     host_tasks: []
