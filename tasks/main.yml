@@ -92,6 +92,7 @@
   args:
     chdir: "{{ appprovision.app }}"
   ignore_errors: yes
+  tags: sync
 
 - name: Make sure Guest symlinks are present
   become: yes
