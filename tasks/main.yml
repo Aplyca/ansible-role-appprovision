@@ -80,7 +80,7 @@
 - name: Make sure the ACLs for app directories with current user are present
   acl:
     name: "{{ appprovision.app }}/{{ item }}"
-    entity: vagrant
+    entity: "{{ ansible_user_id }}"
     etype: user
     permissions: rxw
     default: yes
