@@ -1,6 +1,6 @@
 ---
 appprovision:
-  app: app
+  name: app
   databases: []
   pre_install:
     guest_tasks: []
@@ -10,12 +10,11 @@ appprovision:
     host_tasks: []
   directories: []
   app_symlinks: []
-  sync_symlinks: []
-  guest_symlinks: []
+  os_symlinks: []
   sync: []
   replacements: []
-  config: []
+  app_config: []
+  os_config: []
   post_install:
-    files: []  
     guest_tasks: []
     host_tasks: []
