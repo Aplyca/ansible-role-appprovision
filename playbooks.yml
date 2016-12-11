@@ -1,9 +1,5 @@
 ---
 - name: App Provision
   hosts: all
-  gather_facts: no
   roles:
     - { role: Aplyca.AppProvision, tags: ["appprovision"] }
-  tasks:
-    - debug: var=appprovision
-      tags: vars

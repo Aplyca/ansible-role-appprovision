@@ -1,3 +1,27 @@
 ---
+root: "/home/{{ ansible_user_id }}/app"
+
 appprovision:
-  app: app
+  pre_install:
+    guest_tasks:
+      - "sudo mkdir -p /etc/test/config"
+      - "touch init.txt" 
+  directories:
+    - "{{ root }}/web/var/app"
+    - "{{ root }}/vendor/test/package/lib"
+    - /mnt/app/s3
+    - /mnt/app/s3fs
+  symlinks:
+    - source: s3fs
+      target: /mnt/app/storage
+    - source: /mnt/app/s3fs
+      target: "{{ root }}/web/var/app/storage"
+    - source: "vendor/test/package/lib"
+      target: "{{ root }}/lib"
+  config:
+    - content: "# Ansible content: app root in {{ root }}"
+      dest: "{{ root }}/app/config/common/main.yml"
+    - content: "# Ansible content: OS config file existing directoy"
+      dest: "/etc/main.yml"
+    - content: "# Ansible content: OS config file non existing directory"
+      dest: "/etc/test/config/main.yml"

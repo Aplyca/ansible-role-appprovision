@@ -1,6 +1,9 @@
 ---
 - set_fact: appprovision="{{ appprovision|combine(app | default({})) }}"
 
+- shell: "id -g -n"
+  register: groupname
+
 - debug: var=appprovision verbosity=1
   tags: vars
 
@@ -13,7 +16,7 @@
 - name: Guest pre-install commands
   shell: "{{ item }}"
   args:
-    chdir: "{{ appprovision.installation_path }}/{{ appprovision.name }}/{{ appprovision.current_dir }}"
+    chdir: "{{ appprovision.name }}/{{ appprovision.current_dir }}"
   environment: "{{ appprovision.pre_install.env_vars | default({}) }}"
   with_items: "{{ appprovision.pre_install.guest_tasks | default([]) }}"
   tags: pre_commands
@@ -48,29 +51,27 @@
 - name: Guest install commands
   shell: "{{ item }}"
   args:
-    chdir: "{{ appprovision.installation_path }}/{{ appprovision.name }}/{{ appprovision.current_dir }}"
+    chdir: "{{ appprovision.name }}/{{ appprovision.current_dir }}"
   environment: "{{ appprovision.install.env_vars | default({}) }}"
   with_items: "{{ appprovision.install.guest_tasks | default([]) }}"
   tags: commands
 
-- name: Ensure OS config files are present
+- name: Make sure app directories are present
   become: yes
-  template:
-    src: "config.j2"
-    dest: "{{ item.dest }}"
-  with_items: "{{ appprovision.config | default([]) }}"
-  no_log: True
-  tags: config
-
-- name: Make sure app temporary directories are present
   file:
-    path: "{{ appprovision.installation_path }}/{{ appprovision.name }}/{{ appprovision.current_dir }}"
+    path: "{{ item }}"
     state: directory
+    owner: "{{ ansible_user_id }}"
+    group: "{{ groupname.stdout }}"
+    follow: yes
+    mode: 0755
+    recurse: yes
+    force: yes
   with_items: "{{ appprovision.directories }}"
 
 - name: Make sure the ACLs for app directories for webserver user are present
   acl:
-    name: "{{ appprovision.installation_path }}/{{ appprovision.name }}/{{ appprovision.current_dir }}/{{ item }}"
+    name: "{{ item }}"
     entity: www-data
     etype: user
     permissions: rxw
@@ -79,7 +80,7 @@
 
 - name: Make sure the ACLs for app directories with default and webserver user are present
   acl:
-    name: "{{ appprovision.installation_path }}/{{ appprovision.name }}/{{ appprovision.current_dir }}/{{ item }}"
+    name: "{{ item }}"
     entity: www-data
     etype: user
     permissions: rxw
@@ -89,7 +90,7 @@
 
 - name: Make sure the ACLs for app directories with current user are present
   acl:
-    name: "{{ appprovision.installation_path }}/{{ appprovision.name }}/{{ appprovision.current_dir }}/{{ item }}"
+    name: "{{ item }}"
     entity: "{{ ansible_user_id }}"
     etype: user
     permissions: rxw
@@ -97,22 +98,36 @@
     state: present
   with_items: "{{ appprovision.directories }}"
 
-- name: Make sure OS symlinks are present
+- name: Make sure symlinks are present
   become: yes
   file:
     src: "{{ item.source }}"
     path: "{{ item.target }}"
     state: link
+    owner: "{{ ansible_user_id }}"
+    group: "{{ groupname.stdout }}"
     force: yes
-  with_items: "{{ appprovision.guest_symlinks | default([]) }}"
+    follow: yes
+    mode: 0755
+  with_items: "{{ appprovision.symlinks | default([]) }}"
 
-- name: Make sure App symlinks are present
-  file:
-    src: "{{ item.source }}"
-    path: "{{ appprovision.installation_path }}/{{ appprovision.name }}/{{ appprovision.current_dir }}/{{ item.target }}"
-    state: link
-    force: yes
-  with_items: "{{ appprovision.app_symlinks | default([]) }}"
+- name: Ensure app config directories are present
+  shell: "mkdir -p $(dirname {{ item.dest }})"
+  with_items: "{{ appprovision.config | default([]) }}"
+  no_log: True
+  tags: config
+
+- name: Ensure config files are present
+  become: yes
+  template:
+    src: "config.j2"
+    dest: "{{ item.dest }}"
+    owner: "{{ ansible_user_id }}"
+    group: "{{ groupname.stdout }}"
+    mode: 0755
+  with_items: "{{ appprovision.config | default([]) }}"
+  no_log: True
+  tags: config
 
 - name: "Files replacements"
   become: yes
@@ -121,21 +136,6 @@
     regexp: "{{ item.regex }}"
     replace: "{{ item.replace }}"
   with_items: "{{ appprovision.replacements | default([]) }}"
-
-- name: Ensure app config directories are present
-  shell: "mkdir -p $(dirname {{ item.dest }}) && touch {{ item.dest }}"
-  with_items: "{{ appprovision.app_config | default([]) }}"
-  no_log: True
-  tags: app_config
-
-- name: Ensure App config files are present
-  become: yes
-  template:
-    src: "config.j2"
-    dest: "{{ item.dest }}"
-  with_items: "{{ appprovision.app_config | default([]) }}"
-  no_log: True
-  tags: app_config
 
 - name: Host post-install commands
   local_action: "shell {{ item }}"
@@ -146,7 +146,7 @@
 - name: Guest post-install commands
   shell: "{{ item }}"
   args:
-    chdir: "{{ appprovision.installation_path }}/{{ appprovision.name }}/{{ appprovision.current_dir }}"
+    chdir: "{{ appprovision.name }}/{{ appprovision.current_dir }}"
   environment: "{{ appprovision.post_install.env_vars | default({}) }}"
   with_items: "{{ appprovision.post_install.guest_tasks | default([]) }}"
   tags: post_commands
