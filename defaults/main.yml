@@ -17,3 +17,4 @@ appprovision:
     guest_tasks: []
     host_tasks: []
   nolog: True
+  webservergroup: www-data
