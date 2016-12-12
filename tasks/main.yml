@@ -108,7 +108,6 @@
     owner: "{{ ansible_user_id }}"
     group: "{{ groupname.stdout }}"
     force: yes
-    mode: 0775
   with_items: "{{ appprovision.symlinks | default([]) }}"
 
 - name: Ensure app config directories are present
