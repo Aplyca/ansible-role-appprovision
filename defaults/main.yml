@@ -11,9 +11,9 @@ appprovision:
     host_tasks: []
   directories: []
   symlinks: []
-  sync: []
   replacements: []
   config: []
   post_install:
     guest_tasks: []
     host_tasks: []
+  nolog: True

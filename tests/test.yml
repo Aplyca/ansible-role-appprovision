@@ -5,7 +5,8 @@ appprovision:
   pre_install:
     guest_tasks:
       - "sudo mkdir -p /etc/test/config"
-      - "touch init.txt" 
+      - "mkdir -p app"
+      - "touch init.txt"
   directories:
     - "{{ root }}/web/var/app"
     - "{{ root }}/vendor/test/package/lib"

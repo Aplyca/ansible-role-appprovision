@@ -11,7 +11,7 @@ Vagrant.configure(2) do |config|
         provisioner.playbook = "playbooks.yml"
         provisioner.extra_vars = "tests/test.yml" if File.file?("tests/test.yml")
         #provisioner.tags = "vars"
-        #provisioner.verbose = true
+        provisioner.verbose = true
       end
   end
 end

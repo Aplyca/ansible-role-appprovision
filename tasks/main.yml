@@ -1,11 +1,13 @@
 ---
 - set_fact: appprovision="{{ appprovision|combine(app | default({})) }}"
-
-- shell: "id -g -n"
-  register: groupname
+  tags: always
 
 - debug: var=appprovision verbosity=1
   tags: vars
+
+- shell: "id -g -n"
+  register: groupname
+  tags: always
 
 - name: Host pre-install commands
   local_action: "shell {{ item }}"
@@ -15,8 +17,6 @@
 
 - name: Guest pre-install commands
   shell: "{{ item }}"
-  args:
-    chdir: "{{ appprovision.name }}/{{ appprovision.current_dir }}"
   environment: "{{ appprovision.pre_install.env_vars | default({}) }}"
   with_items: "{{ appprovision.pre_install.guest_tasks | default([]) }}"
   tags: pre_commands
@@ -29,6 +29,7 @@
     encoding: "utf8"
     collation: "utf8_general_ci"
   with_items: "{{ appprovision.databases }}"
+  when: dbdownload.changed | default(true)
   tags: db
 
 - name: Import DB SQL file
@@ -38,6 +39,7 @@
     state: import
     target: "/vagrant/{{ item }}.sql.gz"
   with_items: "{{ appprovision.databases }}"
+  when: dbdownload.changed | default(true)
   async: 3600
   poll: 0
   tags: db
@@ -107,7 +109,6 @@
     owner: "{{ ansible_user_id }}"
     group: "{{ groupname.stdout }}"
     force: yes
-    follow: yes
     mode: 0755
   with_items: "{{ appprovision.symlinks | default([]) }}"
 
@@ -122,11 +123,9 @@
   template:
     src: "config.j2"
     dest: "{{ item.dest }}"
-    owner: "{{ ansible_user_id }}"
-    group: "{{ groupname.stdout }}"
     mode: 0755
   with_items: "{{ appprovision.config | default([]) }}"
-  no_log: True
+  no_log: "{{ appprovision.nolog }}"
   tags: config
 
 - name: "Files replacements"
