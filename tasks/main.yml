@@ -29,7 +29,6 @@
     encoding: "utf8"
     collation: "utf8_general_ci"
   with_items: "{{ appprovision.databases }}"
-  when: dbdownload.changed | default(true)
   tags: db
 
 - name: Import DB SQL file
