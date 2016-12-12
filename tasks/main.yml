@@ -19,6 +19,7 @@
   shell: "{{ item }}"
   environment: "{{ appprovision.pre_install.env_vars | default({}) }}"
   with_items: "{{ appprovision.pre_install.guest_tasks | default([]) }}"
+  no_log: "{{ appprovision.nolog }}"
   tags: pre_commands
 
 - name: Make sure DBs are present
@@ -132,6 +133,7 @@
     regexp: "{{ item.regex }}"
     replace: "{{ item.replace }}"
   with_items: "{{ appprovision.replacements | default([]) }}"
+  no_log: "{{ appprovision.nolog }}"
 
 - name: Host post-install commands
   local_action: "shell {{ item }}"
