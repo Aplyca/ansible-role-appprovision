@@ -38,7 +38,6 @@
     state: import
     target: "/vagrant/{{ item }}.sql.gz"
   with_items: "{{ appprovision.databases }}"
-  when: dbdownload.changed | default(true)
   async: 3600
   poll: 0
   tags: db
