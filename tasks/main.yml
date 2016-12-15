@@ -64,9 +64,7 @@
     state: directory
     owner: "{{ ansible_user_id }}"
     group: "{{ groupname.stdout }}"
-    follow: yes
     mode: 0775
-    recurse: yes
     force: yes
   with_items: "{{ appprovision.directories }}"
 
@@ -98,6 +96,11 @@
     default: yes
     state: present
   with_items: "{{ appprovision.directories }}"
+
+- name: Ensure symlinks directories are present
+  shell: "mkdir -p $(dirname {{ item.target }})"
+  with_items: "{{ appprovision.symlinks | default([]) }}"
+  tags: symlinks
 
 - name: Make sure symlinks are present
   become: yes
