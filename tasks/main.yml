@@ -51,8 +51,6 @@
 
 - name: Guest install commands
   shell: "{{ item }}"
-  args:
-    chdir: "{{ appprovision.name }}/{{ appprovision.current_dir }}"
   environment: "{{ appprovision.install.env_vars | default({}) }}"
   with_items: "{{ appprovision.install.guest_tasks | default([]) }}"
   tags: commands
@@ -124,6 +122,9 @@
   template:
     src: "config.j2"
     dest: "{{ item.dest }}"
+    mode: 0775
+    owner: "{{ ansible_user_id }}"
+    group: "{{ groupname.stdout }}"
   with_items: "{{ appprovision.config | default([]) }}"
   no_log: "{{ appprovision.nolog }}"
   tags: config
@@ -145,8 +146,6 @@
 
 - name: Guest post-install commands
   shell: "{{ item }}"
-  args:
-    chdir: "{{ appprovision.name }}/{{ appprovision.current_dir }}"
   environment: "{{ appprovision.post_install.env_vars | default({}) }}"
   with_items: "{{ appprovision.post_install.guest_tasks | default([]) }}"
   tags: post_commands
