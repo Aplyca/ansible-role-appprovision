@@ -2,6 +2,7 @@
 appprovision:
   name: app
   current_dir: ""
+  download_dir: /vagrant
   databases: []
   pre_install:
     guest_tasks: []

@@ -37,7 +37,7 @@
   mysql_db:
     name: "{{ item }}"
     state: import
-    target: "/vagrant/{{ item }}.sql.gz"
+    target: "{{ appprovision.download_dir }}/{{ item }}.sql.gz"
   with_items: "{{ appprovision.databases }}"
   async: 3600
   poll: 0
@@ -94,11 +94,6 @@
     default: yes
     state: present
   with_items: "{{ appprovision.directories }}"
-
-- name: Ensure symlinks directories are present
-  shell: "mkdir -p $(dirname {{ item.target }})"
-  with_items: "{{ appprovision.symlinks | default([]) }}"
-  tags: symlinks
 
 - name: Make sure symlinks are present
   become: yes
