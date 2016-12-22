@@ -9,19 +9,6 @@
   register: groupname
   tags: always
 
-- name: Host pre-install commands
-  local_action: "shell {{ item }}"
-  environment: "{{ appprovision.pre_install.env_vars | default({}) }}"
-  with_items: "{{ appprovision.pre_install.host_tasks | default([]) }}"
-  tags: pre_commands
-
-- name: Guest pre-install commands
-  shell: "{{ item }}"
-  environment: "{{ appprovision.pre_install.env_vars | default({}) }}"
-  with_items: "{{ appprovision.pre_install.guest_tasks | default([]) }}"
-  no_log: "{{ appprovision.nolog }}"
-  tags: pre_commands
-
 - name: Make sure DBs are present
   become: yes
   mysql_db:
@@ -42,6 +29,19 @@
   async: 3600
   poll: 0
   tags: db
+
+- name: Host pre-install commands
+  local_action: "shell {{ item }}"
+  environment: "{{ appprovision.pre_install.env_vars | default({}) }}"
+  with_items: "{{ appprovision.pre_install.host_tasks | default([]) }}"
+  tags: pre_commands
+
+- name: Guest pre-install commands
+  shell: "{{ item }}"
+  environment: "{{ appprovision.pre_install.env_vars | default({}) }}"
+  with_items: "{{ appprovision.pre_install.guest_tasks | default([]) }}"
+  no_log: "{{ appprovision.nolog }}"
+  tags: pre_commands
 
 - name: Host install commands
   local_action: "shell {{ item }}"
