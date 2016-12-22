@@ -17,6 +17,7 @@
     encoding: "utf8"
     collation: "utf8_general_ci"
   with_items: "{{ appprovision.databases }}"
+  register: create_db
   tags: db
 
 - name: Import DB SQL file
@@ -26,6 +27,8 @@
     state: import
     target: "{{ appprovision.download_dir }}/{{ item }}.sql.gz"
   with_items: "{{ appprovision.databases }}"
+  async: "{% if create_db.changed %}0{% else %}3600{% endif %}"
+  poll: 0  
   tags: db
 
 - name: Host pre-install commands
