@@ -26,8 +26,6 @@
     state: import
     target: "{{ appprovision.download_dir }}/{{ item }}.sql.gz"
   with_items: "{{ appprovision.databases }}"
-  async: 3600
-  poll: 0
   tags: db
 
 - name: Host pre-install commands
