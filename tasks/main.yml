@@ -107,9 +107,9 @@
     force: yes
   with_items: "{{ appprovision.symlinks | default([]) }}"
 
-- name: Ensure app config directories are present
-  shell: "mkdir -p $(dirname {{ item.dest }})"
-  with_items: "{{ appprovision.config | default([]) }}"
+- name: Ensure config directories are present host
+  local_action: "shell mkdir -p $(dirname {{ item.dest }})"
+  with_items: "{{ appprovision.config_host | default([]) }}"
   no_log: "{{ appprovision.nolog }}"
   tags: config
 
@@ -119,6 +119,12 @@
     src: "config.j2"
     dest: "{{ item.dest }}"
   with_items: "{{ appprovision.config_host | default([]) }}"
+  no_log: "{{ appprovision.nolog }}"
+  tags: config
+
+- name: Ensure app config directories are present guest
+  shell: "mkdir -p $(dirname {{ item.dest }})"
+  with_items: "{{ appprovision.config_guest | default([]) }}"
   no_log: "{{ appprovision.nolog }}"
   tags: config
 
