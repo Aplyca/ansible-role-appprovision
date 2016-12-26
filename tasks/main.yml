@@ -28,7 +28,7 @@
     target: "{{ appprovision.download_dir }}/{{ item }}.sql.gz"
   with_items: "{{ appprovision.databases }}"
   async: "{% if create_db.changed %}0{% else %}3600{% endif %}"
-  poll: 0  
+  poll: 0
   tags: db
 
 - name: Host pre-install commands
@@ -113,7 +113,16 @@
   no_log: "{{ appprovision.nolog }}"
   tags: config
 
-- name: Ensure config files are present
+- name: Ensure config files are present in host
+  local_action: template
+  args:
+    src: "config.j2"
+    dest: "{{ item.dest }}"
+  with_items: "{{ appprovision.config_host | default([]) }}"
+  no_log: "{{ appprovision.nolog }}"
+  tags: config
+
+- name: Ensure config files are present in guest
   become: yes
   template:
     src: "config.j2"
@@ -121,7 +130,7 @@
     mode: 0775
     owner: "{{ ansible_user_id }}"
     group: "{{ groupname.stdout }}"
-  with_items: "{{ appprovision.config | default([]) }}"
+  with_items: "{{ appprovision.config_guest | default([]) }}"
   no_log: "{{ appprovision.nolog }}"
   tags: config
 
