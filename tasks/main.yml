@@ -31,6 +31,39 @@
   poll: 0
   tags: db
 
+- name: Ensure config directories are present host
+  local_action: "shell mkdir -p $(dirname {{ item.dest }})"
+  with_items: "{{ appprovision.config_host | default([]) }}"
+  no_log: "{{ appprovision.nolog }}"
+  tags: config
+
+- name: Ensure config files are present in host
+  local_action: template
+  args:
+    src: "config.j2"
+    dest: "{{ item.dest }}"
+  with_items: "{{ appprovision.config_host | default([]) }}"
+  no_log: "{{ appprovision.nolog }}"
+  tags: config
+
+- name: Ensure app config directories are present guest
+  shell: "mkdir -p $(dirname {{ item.dest }})"
+  with_items: "{{ appprovision.config_guest | default([]) }}"
+  no_log: "{{ appprovision.nolog }}"
+  tags: config
+
+- name: Ensure config files are present in guest
+  become: yes
+  template:
+    src: "config.j2"
+    dest: "{{ item.dest }}"
+    mode: 0775
+    owner: "{{ ansible_user_id }}"
+    group: "{{ groupname.stdout }}"
+  with_items: "{{ appprovision.config_guest | default([]) }}"
+  no_log: "{{ appprovision.nolog }}"
+  tags: config
+
 - name: Host pre-install commands
   local_action: "shell {{ item }}"
   environment: "{{ appprovision.pre_install.env_vars | default({}) }}"
@@ -106,39 +139,6 @@
     group: "{{ groupname.stdout }}"
     force: yes
   with_items: "{{ appprovision.symlinks | default([]) }}"
-
-- name: Ensure config directories are present host
-  local_action: "shell mkdir -p $(dirname {{ item.dest }})"
-  with_items: "{{ appprovision.config_host | default([]) }}"
-  no_log: "{{ appprovision.nolog }}"
-  tags: config
-
-- name: Ensure config files are present in host
-  local_action: template
-  args:
-    src: "config.j2"
-    dest: "{{ item.dest }}"
-  with_items: "{{ appprovision.config_host | default([]) }}"
-  no_log: "{{ appprovision.nolog }}"
-  tags: config
-
-- name: Ensure app config directories are present guest
-  shell: "mkdir -p $(dirname {{ item.dest }})"
-  with_items: "{{ appprovision.config_guest | default([]) }}"
-  no_log: "{{ appprovision.nolog }}"
-  tags: config
-
-- name: Ensure config files are present in guest
-  become: yes
-  template:
-    src: "config.j2"
-    dest: "{{ item.dest }}"
-    mode: 0775
-    owner: "{{ ansible_user_id }}"
-    group: "{{ groupname.stdout }}"
-  with_items: "{{ appprovision.config_guest | default([]) }}"
-  no_log: "{{ appprovision.nolog }}"
-  tags: config
 
 - name: "Files replacements"
   become: yes
