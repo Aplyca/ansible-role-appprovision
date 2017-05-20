@@ -12,7 +12,7 @@
 - name: Make sure DBs are present
   become: yes
   mysql_db:
-    name: "{{ item }}"
+    name: "{{ item.dest }}"
     state: present
     encoding: "utf8"
     collation: "utf8_general_ci"
@@ -23,9 +23,9 @@
 - name: Import DB SQL file
   become: yes
   mysql_db:
-    name: "{{ item }}"
+    name: "{{ item.dest }}"
     state: import
-    target: "{{ appprovision.download_dir }}/{{ item }}.sql.gz"
+    target: "{{ appprovision.download_dir }}/{{ item.src }}.sql.gz"
   with_items: "{{ appprovision.databases }}"
   async: "{% if create_db.changed %}0{% else %}3600{% endif %}"
   poll: 0
