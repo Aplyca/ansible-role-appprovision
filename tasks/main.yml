@@ -77,18 +77,6 @@
   no_log: "{{ appprovision.nolog }}"
   tags: pre_commands
 
-- name: Host install commands
-  local_action: "shell {{ item }}"
-  environment: "{{ appprovision.install.env_vars | default({}) }}"
-  with_items: "{{ appprovision.install.host_tasks | default([]) }}"
-  tags: commands
-
-- name: Guest install commands
-  shell: "{{ item }}"
-  environment: "{{ appprovision.install.env_vars | default({}) }}"
-  with_items: "{{ appprovision.install.guest_tasks | default([]) }}"
-  tags: commands
-
 - name: Make sure app directories are present
   become: yes
   file:
@@ -148,6 +136,18 @@
     replace: "{{ item.replace }}"
   with_items: "{{ appprovision.replacements | default([]) }}"
   no_log: "{{ appprovision.nolog }}"
+
+- name: Host install commands
+  local_action: "shell {{ item }}"
+  environment: "{{ appprovision.install.env_vars | default({}) }}"
+  with_items: "{{ appprovision.install.host_tasks | default([]) }}"
+  tags: commands
+
+- name: Guest install commands
+  shell: "{{ item }}"
+  environment: "{{ appprovision.install.env_vars | default({}) }}"
+  with_items: "{{ appprovision.install.guest_tasks | default([]) }}"
+  tags: commands
 
 - name: Host post-install commands
   local_action: "shell {{ item }}"
