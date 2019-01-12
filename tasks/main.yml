@@ -1,5 +1,8 @@
----
 - set_fact: appprovision="{{ appprovision|combine(app | default({})) }}"
+  tags: always
+
+- debug:
+      msg: "Provisioning app '{{ appprovision.name }}'"
   tags: always
 
 - debug: var=appprovision verbosity=1
@@ -12,10 +15,10 @@
 - name: Make sure DBs are present
   become: yes
   mysql_db:
-    name: "{{ item.dest }}"
-    state: present
-    encoding: "utf8"
-    collation: "utf8_general_ci"
+      name: "{{ item.dest }}"
+      state: present
+      encoding: "utf8"
+      collation: "utf8_general_ci"
   with_items: "{{ appprovision.databases }}"
   register: create_db
   tags: db
@@ -23,9 +26,9 @@
 - name: Import DB SQL file
   become: yes
   mysql_db:
-    name: "{{ item.dest }}"
-    state: import
-    target: "{{ appprovision.download_dir }}/{{ item.src }}.sql.gz"
+      name: "{{ item.dest }}"
+      state: import
+      target: "{{ appprovision.download_dir }}/{{ item.src }}.sql.gz"
   with_items: "{{ appprovision.databases }}"
   async: "{% if create_db.changed %}0{% else %}3600{% endif %}"
   poll: 0
@@ -40,26 +43,27 @@
 - name: Ensure config files are present in host
   local_action: copy
   args:
-    content: "{{ item.content }}"
-    dest: "{{ item.dest }}"
+      content: "{{ item.content }}"
+      dest: "{{ item.dest }}"
   with_items: "{{ appprovision.config_host | default([]) }}"
   no_log: "{{ appprovision.nolog }}"
   tags: config
 
 - name: Ensure app config directories are present guest
-  shell: "mkdir -p $(dirname {{ item.dest }})"
+  file:
+      path: "{{ ( installation_path + '/' + item.dest) | dirname }}"
+      state: directory
+      force: yes
   with_items: "{{ appprovision.config_guest | default([]) }}"
   no_log: "{{ appprovision.nolog }}"
   tags: config
 
 - name: Ensure config files are present in guest
-  become: yes
   copy:
-    content: "{{ item.content }}"
-    dest: "{{ item.dest }}"
-    mode: 0775
-    owner: "{{ ansible_user_id }}"
-    group: "{{ groupname.stdout }}"
+      content: "{{ item.content }}"
+      dest: "{{ installation_path }}/{{ item.dest }}"
+      owner: "{{ appprovision.owner | default(ansible_user_id) }}"
+      group: "{{ appprovision.group | default(groupname.stdout) }}"
   with_items: "{{ appprovision.config_guest | default([]) }}"
   no_log: "{{ appprovision.nolog }}"
   tags: config
@@ -73,6 +77,8 @@
 - name: Guest pre-install commands
   shell: "{{ item }}"
   environment: "{{ appprovision.pre_install.env_vars | default({}) }}"
+  args:
+      chdir: "{{ installation_path }}"
   with_items: "{{ appprovision.pre_install.guest_tasks | default([]) }}"
   no_log: "{{ appprovision.nolog }}"
   tags: pre_commands
@@ -80,60 +86,63 @@
 - name: Make sure app directories are present
   become: yes
   file:
-    path: "{{ item }}"
-    state: directory
-    owner: "{{ ansible_user_id }}"
-    group: "{{ groupname.stdout }}"
-    mode: 0775
-    force: yes
-  with_items: "{{ appprovision.directories }}"
+      path: "{{ installation_path }}/{{ item }}"
+      state: directory
+      owner: "{{ appprovision.owner | default(ansible_user_id) }}"
+      group: "{{ appprovision.group | default(ansible_user_id) }}"
+      force: yes
+      recurse: yes
+  with_items: "{{ appprovision.directories | default([]) }}"
 
 - name: Make sure the ACLs for app directories for webserver user are present
+  become: yes
   acl:
-    name: "{{ item }}"
-    entity: "{{ appprovision.webservergroup }}"
-    etype: user
-    permissions: rxw
-    state: present
+      name: "{{ installation_path }}/{{ item }}"
+      entity: "{{ appprovision.webservergroup }}"
+      etype: user
+      permissions: rxw
+      state: present
   with_items: "{{ appprovision.directories }}"
 
 - name: Make sure the ACLs for app directories with default and webserver user are present
+  become: yes
   acl:
-    name: "{{ item }}"
-    entity: "{{ appprovision.webservergroup }}"
-    etype: user
-    permissions: rxw
-    default: yes
-    state: present
+      name: "{{ installation_path }}/{{ item }}"
+      entity: "{{ appprovision.webservergroup }}"
+      etype: user
+      permissions: rxw
+      default: yes
+      state: present
   with_items: "{{ appprovision.directories }}"
 
 - name: Make sure the ACLs for app directories with current user are present
+  become: yes
   acl:
-    name: "{{ item }}"
-    entity: "{{ ansible_user_id }}"
-    etype: user
-    permissions: rxw
-    default: yes
-    state: present
+      name: "{{ installation_path }}/{{ item }}"
+      entity: "{{ appprovision.owner | default(ansible_user_id) }}"
+      etype: user
+      permissions: rxw
+      default: yes
+      state: present
   with_items: "{{ appprovision.directories }}"
 
 - name: Make sure symlinks are present
   become: yes
   file:
-    src: "{{ item.source }}"
-    path: "{{ item.target }}"
-    state: link
-    owner: "{{ ansible_user_id }}"
-    group: "{{ groupname.stdout }}"
-    force: yes
+      src: "{{ item.source }}"
+      path: "{{ installation_path }}/{{ item.target }}"
+      state: link
+      owner: "{{ appprovision.owner | default(ansible_user_id) }}"
+      group: "{{ appprovision.group | default(groupname.stdout) }}"
+      force: yes
   with_items: "{{ appprovision.symlinks | default([]) }}"
 
 - name: "Files replacements"
   become: yes
   replace:
-    dest: "{{ item.file }}"
-    regexp: "{{ item.regex }}"
-    replace: "{{ item.replace }}"
+      dest: "{{ item.file }}"
+      regexp: "{{ item.regex }}"
+      replace: "{{ item.replace }}"
   with_items: "{{ appprovision.replacements | default([]) }}"
   no_log: "{{ appprovision.nolog }}"
 
@@ -145,6 +154,8 @@
 
 - name: Guest install commands
   shell: "{{ item }}"
+  args:
+      chdir: "{{ installation_path }}"
   environment: "{{ appprovision.install.env_vars | default({}) }}"
   with_items: "{{ appprovision.install.guest_tasks | default([]) }}"
   tags: commands
@@ -157,6 +168,8 @@
 
 - name: Guest post-install commands
   shell: "{{ item }}"
+  args:
+      chdir: "{{ installation_path }}"
   environment: "{{ appprovision.post_install.env_vars | default({}) }}"
   with_items: "{{ appprovision.post_install.guest_tasks | default([]) }}"
   tags: post_commands
