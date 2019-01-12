@@ -1,14 +1,18 @@
-- set_fact: appprovision="{{ appprovision|combine(app | default({})) }}"
+- name: Merge variables
+  set_fact: appprovision="{{ appprovision|combine(app | default({})) }}"
   tags: always
 
-- debug:
+- name: Set debug app
+  debug:
       msg: "Provisioning app '{{ appprovision.name }}'"
   tags: always
 
-- debug: var=appprovision verbosity=1
+- name: Set debug
+  debug: var=appprovision verbosity=1
   tags: vars
 
-- shell: "id -g -n"
+- name: Get group name
+  shell: "id -g -n"
   register: groupname
   tags: always
 
